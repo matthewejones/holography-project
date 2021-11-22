@@ -1,0 +1,8 @@
+# Ignore folders
+__pycache__/
+Holograms/
+Images/
+Replay_Images/
+Replay_Simulations/
+Unused/
+.DS_Store
