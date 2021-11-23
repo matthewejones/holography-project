@@ -26,7 +26,7 @@ def OSPR(target_image, adaptive=False):
             Efield = A * Diffuser
             Hfield = np.fft.ifft2(np.fft.ifftshift(Efield))
             Phase = np.angle(Hfield) > 0
-            Hologram += Phase * 2**(iteration)
+            Hologram += Phase * 2**(iteration) #binary shift
             
             if adaptive == True:
                 I = abs(np.fft.fftshift(np.fft.fft2(np.exp(1j * np.pi * Phase), norm='ortho')))**2
