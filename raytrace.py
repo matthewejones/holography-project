@@ -8,8 +8,6 @@ def raytrace_slope(image, angle, R):
     intensities = np.zeros(image.shape)
     quantities = np.zeros(image.shape, np.int16)
 
-
-
     pitch = R * utils.beam_angle / max(image.shape)
     width = image.shape[1]
     height = image.shape[0]
@@ -36,8 +34,6 @@ def raytrace_cylinder(image, radius, R):
     #make 2 NxN arrays, one stores the total of the pixel values, one stores the number of pixels
     intensities = np.zeros(image.shape)
     quantities = np.zeros(image.shape, np.int16)
-
-
 
     pitch = R * utils.beam_angle / max(image.shape)
     width = image.shape[1]
