@@ -48,78 +48,79 @@ def OSPR(target_image, adaptive=False):
     return TotalHologram
 
 
+if __name__ == "__main__":
 
-# Get the input image
-argv = sys.argv[1:]
+    # Get the input image
+    argv = sys.argv[1:]
 
-try:
-    opts, args = getopt.getopt(argv,"hr:agi",["rotate=","scale="])
-except:
-    raise TypeError("Enter valid input image. Type OSPR.py -h for usage")
-    sys.exit(2)
-
-for opt, arg in opts:
-    if opt == '-h':
-        print('Usage:\n\tpython OSPR.py <inputimage> (Contained in /Images/ folder) \nFlags: \n\t-r <angle> :\t\tRotate input image \n\t--rotate <angle> :\tRotate input image \n\t-a :\t\t\tAdaptive OSPR\n\t-g :\t\t\tEnable Gamma Correction\n\t-i :\t\t\tInvert Image,\n\t--scale <scale> :\t\tScale Image')
+    try:
+        opts, args = getopt.getopt(argv,"hr:agi",["rotate=","scale="])
+    except:
+        raise TypeError("Enter valid input image. Type OSPR.py -h for usage")
         sys.exit(2)
-    elif opt in ("-r", "--rotate"):
-        angle = float(arg)
-        rotate = True
-    elif opt == "-a":
-        adaptive = True
-    elif opt == "-g":
-        gamma = True
-    elif opt == "-i":
-        invert = True
-    elif opt == "--scale":
-        scale = float(arg)
+
+    for opt, arg in opts:
+        if opt == '-h':
+            print('Usage:\n\tpython OSPR.py <inputimage> (Contained in /Images/ folder) \nFlags: \n\t-r <angle> :\t\tRotate input image \n\t--rotate <angle> :\tRotate input image \n\t-a :\t\t\tAdaptive OSPR\n\t-g :\t\t\tEnable Gamma Correction\n\t-i :\t\t\tInvert Image,\n\t--scale <scale> :\t\tScale Image')
+            sys.exit(2)
+        elif opt in ("-r", "--rotate"):
+            angle = float(arg)
+            rotate = True
+        elif opt == "-a":
+            adaptive = True
+        elif opt == "-g":
+            gamma = True
+        elif opt == "-i":
+            invert = True
+        elif opt == "--scale":
+            scale = float(arg)
+            
+
+    img = args[0]
+    img_name = img.partition(".")[0]
+    input_image = cv2.imread('Images/' + img, cv2.IMREAD_GRAYSCALE)
+
+
+    print("\n")
+    print("#" * 73)
+    print("#\tOSPR Hologram Generator for Freeman Projector\t\t\t#\n#\tAdam Goldney, Cambridge Engineering 4th Year Project\t\t#")
+    print("#" * 73)
+
+
+    if input_image is None:
+        raise ValueError("No image with that name")
+
+
+    # Image inversion white -> black
+    if invert == True:
+        input_image = 255 - input_image
+
+    # Rotate image
+    if rotate == True:
+        input_image = rotate_image(input_image, angle)
+        img_name = img_name + '-titled_{}'.format(str(int(angle)))
+
+    # Gamma correction
+    if gamma == True:
+        input_image = gamma_correct(input_image)
+
+    # Scale image by desired amount
+    input_image = scale_image(input_image, scale)
+
+    # Transform for projection
+    transformed_image = window_image_for_holo(input_image)
         
-
-img = args[0]
-img_name = img.partition(".")[0]
-input_image = cv2.imread('Images/' + img, cv2.IMREAD_GRAYSCALE)
+    # Create the hologram using OSPR
+    hologram = OSPR(transformed_image, adaptive)
 
 
-print("\n")
-print("#" * 73)
-print("#\tOSPR Hologram Generator for Freeman Projector\t\t\t#\n#\tAdam Goldney, Cambridge Engineering 4th Year Project\t\t#")
-print("#" * 73)
+    # Create a directory if it doesn't exist
+    if not os.path.exists('Holograms'):
+        os.makedirs('Holograms')
 
 
-if input_image is None:
-    raise ValueError("No image with that name")
+    # Write the hologram to file
+    cv2.imwrite('Holograms/Holo-'+ img_name + '.bmp', hologram)
 
-
-# Image inversion white -> black
-if invert == True:
-    input_image = 255 - input_image
-
-# Rotate image
-if rotate == True:
-    input_image = rotate_image(input_image, angle)
-    img_name = img_name + '-titled_{}'.format(str(int(angle)))
-
-# Gamma correction
-if gamma == True:
-    input_image = gamma_correct(input_image)
-
-# Scale image by desired amount
-input_image = scale_image(input_image, scale)
-
-# Transform for projection
-transformed_image = window_image_for_holo(input_image)
-    
-# Create the hologram using OSPR
-hologram = OSPR(transformed_image, adaptive)
-
-
-# Create a directory if it doesn't exist
-if not os.path.exists('Holograms'):
-    os.makedirs('Holograms')
-
-
-# Write the hologram to file
-cv2.imwrite('Holograms/Holo-'+ img_name + '.bmp', hologram)
-
-print('Holo-' + img_name + '.bmp')
+    print('Holo-' + img_name + '.bmp')
 
