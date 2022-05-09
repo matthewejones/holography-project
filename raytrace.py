@@ -12,18 +12,28 @@ Usage:
 Flags:
     -s <angle>:     Apply raytracing for a tilted surface at an angle in degrees
     -c <radius>:    Apply raytracing for a cylinder with a radius curvature given in metres
-    -R <distance from projector to screen>
+    -R <distance>:  Specify distance of screen from projector
+    -a:             Specify beam angle
     -g:             Generate hologram using ospr after generating the image
     -o <filename>:  Specify output filename
     -n:             Don't save raytrace file
+    --grid <width>:         Adjust size from grid and width of grid at projection distance instead of beam angle.
 """
+
+
+GRID_PROPORTION = (1014-264)/1280
+beam_angle = utils.beam_angle
+grid = False
 
 def raytrace_slope(image, angle, R):
     #make 2 NxN arrays, one stores the total of the pixel values, one stores the number of pixels
     intensities = np.zeros(image.shape)
     quantities = np.zeros(image.shape, np.int16)
+    if grid:
+        pitch = grid / GRID_PROPORTION / image.shape[0]
+    else:
+        pitch = R * beam_angle / max(image.shape)
 
-    pitch = R * utils.beam_angle / max(image.shape)
     width = image.shape[1]
     height = image.shape[0]
     for n in range(height):
@@ -50,7 +60,11 @@ def raytrace_cylinder(image, radius, R):
     intensities = np.zeros(image.shape)
     quantities = np.zeros(image.shape, np.int16)
 
-    pitch = R * utils.beam_angle / max(image.shape)
+    #It would be better to instead of considering the beam angle, we consider the size of the projection at a given point.
+    if grid:
+        pitch = grid / GRID_PROPORTION / image.shape[0]
+    else:
+        pitch = R * beam_angle / max(image.shape)
     width = image.shape[1]
     height = image.shape[0]
     for n in range(height):
@@ -83,7 +97,7 @@ if __name__ == "__main__":
     argv = sys.argv[1:]
 
     try:
-        opts, args = getopt.getopt(argv, "s:c:R:o:gnh")
+        opts, args = getopt.getopt(argv, "s:c:R:o:gnha:", ['grid='])
     except:
         raise TypeError("Enter valid input image. Use -h for usage")
         sys.exit(2)
@@ -96,7 +110,7 @@ if __name__ == "__main__":
             slope = True
             angle = float(arg)
         elif opt == '-c':
-            cylinder == True
+            cylinder = True
             r = float(arg)
         elif opt == '-R':
             R = float(arg)
@@ -106,38 +120,55 @@ if __name__ == "__main__":
             output = arg
         elif opt == '-n':
             save = False
+        elif opt == '-a':
+            beam_angle = arg
+        elif opt == '--grid':
+            grid = float(arg)
 
     print("\n")
     print("#" * 65)
     print("#\tRaytrace Generator for Non-Uniform Projection\t\t#")
-    print("#" * 65)
+    print("#" * 65 + '\n')
 
     input_file = args[0]
+    print("Processing ",input_file)
 
     name, extension = utils.split_filename(input_file)
     if not(extension):
         extension = 'bmp'
     
+    filename = name
+
     
-    input_image = cv2.imread(input_file, cv2.IMREAD_GRAYSCALE)
+    
+    input_image = cv2.imread('images/{}'.format(input_file), cv2.IMREAD_GRAYSCALE)
 
     if (slope):
-        raytrace = raytrace_slope(input_image, angle, R)
+        print("Raytracing...")
+        raytrace = raytrace_slope(input_image, angle*np.pi/180, R)
+        print("Raytracing complete")
+        filename = output + ('-slope' if (slope and cylinder) else '') if output else "{}-slope-{}-{}".format(name, angle, R)
         if (save):
-            filename = output + ('-slope' if (slope and cylinder) else '') if output else "{}-slope-{}-{]".format(name, angle, R)
             cv2.imwrite('images/{}.{}'.format(filename, extension), raytrace)
+            print("Saved as {}.{}".format(filename, extension))
     #Distance = 0.4375
     #r = 0.0225
     if (cylinder):
+        print("Raytracing...")
         raytrace = raytrace_cylinder(input_image, r, R)
+        print("Raytracing complete")
+        filename = output + ('-cylinder' if (slope and cylinder) else '') if output else "{}-cylinder-{}-{}".format(name, r, R)
         if (save):
-            filename = output + ('-cylinder' if (slope and cylinder) else '') if output else "{}-cylinder-{}-{]".format(name, r, R)
             cv2.imwrite('images/{}.{}'.format(filename, extension), raytrace)
+            print("Saved as {}.{}".format(filename, extension))
     if (hologram):
+        print("Generating Hologram")
         #From OSPR.py by Adam Goldney:
         transformed_image = utils.window_image_for_holo(raytrace)
         holo = OSPR(transformed_image, False)
-        cv2.imwrite('holograms/{}-holo.{}'.format(filename, 'bmp'), holo)
+        file = '{}-holo.{}'.format(filename, 'bmp')
+        cv2.imwrite('holograms/{}'.format(file), holo)
+        print("Saved as", file)
 
 
 
