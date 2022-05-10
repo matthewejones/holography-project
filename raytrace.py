@@ -1,5 +1,6 @@
 import numpy as np
 import cv2
+import json
 #For giving arguments
 import sys, os, getopt
 
@@ -10,14 +11,16 @@ usage = """
 Usage:
     python raytrace.py <inputimage> (from /images/ folder)
 Flags:
-    -s <angle>:     Apply raytracing for a tilted surface at an angle in degrees
-    -c <radius>:    Apply raytracing for a cylinder with a radius curvature given in metres
-    -R <distance>:  Specify distance of screen from projector
-    -a:             Specify beam angle
-    -g:             Generate hologram using ospr after generating the image
-    -o <filename>:  Specify output filename
-    -n:             Don't save raytrace file
-    --grid <width>:         Adjust size from grid and width of grid at projection distance instead of beam angle.
+    -s <angle>:         Apply raytracing for a tilted surface at an angle in degrees
+    -c <radius>:        Apply raytracing for a cylinder with a radius curvature given in metres
+    -R <distance>:      Specify distance of screen from projector
+    -a:                 Specify beam angle
+    -g:                 Generate hologram using ospr after generating the image
+    -o <filename>:      Specify output filename
+    -n:                 Don't save raytrace file
+    --grid <width>:     Adjust size from grid and width of grid at projection distance instead of beam angle.
+    --save <config>:    Save current configuration to file
+    --config <config>:  Load configuration from file
 """
 
 
@@ -94,36 +97,60 @@ if __name__ == "__main__":
     angle = 0
     r = 0.1
 
+    def parse_input(opts):
+        global slope, cylinder, hologram, angle, r, R, output, save, beam_angle, grid
+        for opt, arg in opts:
+            if opt == '-s':
+                slope = True
+                angle = float(arg)
+            elif opt == '-c':
+                cylinder = True
+                r = float(arg)
+            elif opt == '-R':
+                R = float(arg)
+            elif opt == '-g':
+                hologram = True
+            elif opt == '-o':
+                output = arg
+            elif opt == '-n':
+                save = False
+            elif opt == '-a':
+                beam_angle = arg
+            elif opt == '--grid':
+                grid = float(arg)
+
     argv = sys.argv[1:]
 
     try:
-        opts, args = getopt.getopt(argv, "s:c:R:o:gnha:", ['grid='])
+        opts, args = getopt.getopt(argv, "s:c:R:o:gnha:", ['grid=', 'config=', 'save='])
     except:
         raise TypeError("Enter valid input image. Use -h for usage")
         sys.exit(2)
 
+    
+    #Check for configs
     for opt, arg in opts:
         if opt == '-h':
             print(usage)
             sys.exit(2)
-        elif opt == '-s':
-            slope = True
-            angle = float(arg)
-        elif opt == '-c':
-            cylinder = True
-            r = float(arg)
-        elif opt == '-R':
-            R = float(arg)
-        elif opt == '-g':
-            hologram = True
-        elif opt == '-o':
-            output = arg
-        elif opt == '-n':
-            save = False
-        elif opt == '-a':
-            beam_angle = arg
-        elif opt == '--grid':
-            grid = float(arg)
+        if opt == '--save':
+            try:
+                config_file = open('config/raytrace.json', 'r+')
+            except FileNotFoundError:
+                config_file = open('config/raytrace.json', 'w')
+            finally:
+                data = json.load(config_file)
+                opts.remove((opt, arg))
+                data[arg] = opts
+                config_file.seek(0)
+                json.dump(data, config_file, indent=4)
+                config_file.close()
+        if opt == '--config':
+            with open('config/raytrace.json', 'r') as config_file:
+                data = json.load(config_file)
+                parse_input(data[arg])
+
+    parse_input(opts)
 
     print("\n")
     print("#" * 65)
