@@ -73,19 +73,20 @@ def raytrace_cylinder(image, radius, R):
     for n in range(height):
         for m in range(width):
             theta = (m - width/2)*pitch/radius
-            v = (height/2 - n)*pitch
-            r = np.array([
-                radius * np.sin(theta),
-                v,
-                -R - radius * (1 - np.cos(theta))
-            ])
-            r2 = -R/r[2] * r
-            px2 = int(np.floor(r2[0]/pitch + width/2))
-            py2 = int(np.floor(height/2 - r2[1]/pitch))
-            #print(m, n, px2, py2)
-            if (px2 < width and py2 < height):
-                intensities[py2, px2] += image[n, m]
-                quantities[py2, px2] += 1
+            if(-np.pi/2 <= theta <= np.pi/2):
+                v = (height/2 - n)*pitch
+                r = np.array([
+                    radius * np.sin(theta),
+                    v,
+                    -R - radius * (1 - np.cos(theta))
+                ])
+                r2 = -R/r[2] * r
+                px2 = int(np.floor(r2[0]/pitch + width/2))
+                py2 = int(np.floor(height/2 - r2[1]/pitch))
+                #print(m, n, px2, py2)
+                if (px2 < width and py2 < height):
+                    intensities[py2, px2] += image[n, m]
+                    quantities[py2, px2] += 1
     
     return np.divide(intensities, quantities, where=quantities > 0)
 
