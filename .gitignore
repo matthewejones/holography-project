@@ -1,3 +1,11 @@
 *.pyc
 /images/*
 /holograms/*
+/**/.vs
+*.sln
+*.vcxproj
+*.vcxproj.*
+/**/Debug
+/performance_exp/cpp/x64
+/**/.vscode
+/**/__pycache__
