@@ -1,9 +1,9 @@
 import numpy as np
 import math
 
-image_height = 192
-image_width = 192
-frames = 50
+image_height = 1080
+image_width = 1920
+frames = 4
 N = 8
 
 def OSPR(target_image):
@@ -19,10 +19,12 @@ def OSPR(target_image):
             Hfield = np.fft.ifft2(np.fft.ifftshift(Efield))
             Phase = np.angle(Hfield) > 0
             Hologram += Phase * 2**(iteration) #binary shift
+            print(Hologram)
                 
 
         TotalHologram[:,:,i] = Hologram
     return TotalHologram
 
 for n in range(frames):
-    hologram = OSPR(np.random.rand(image_height, image_width))
+    image = np.random.rand(image_height, image_width)
+    hologram = OSPR(image)

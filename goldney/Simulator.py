@@ -73,7 +73,7 @@ for opt, arg in opts:
 img = args[0]
 
 img_name = img.partition(".bmp")[0]
-img_name = img_name.partition("-")[2]
+#img_name = img_name.partition("-")[2]
 
 holo = cv2.imread('Holograms/' + img)
 
@@ -90,8 +90,8 @@ replay = simulate(holo,fv)
 
 
 # Create a directory if it doesn't exist
-if not os.path.exists('Replay_Simulated'):
-    os.makedirs('Replay_Simulated')
+if not os.path.exists('Replay_Simulations'):
+    os.makedirs('Replay_Simulations')
 
 
 # Write the replay field to file

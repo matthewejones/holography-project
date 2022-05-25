@@ -56,7 +56,7 @@ int main(int argc, char const* argv[])
 
 void run(int height, int width, fftw_plan plan) {
     cv::Mat image(height, width, CV_8UC1);
-    cv::Mat hologram(height, width, CV_8UC1);
+    cv::Mat hologram(height, width, CV_8UC3);
     std::cout << "In run(): the pointers to image and hologram" << &image << &hologram << std::endl;
 
     fillRandom(image);

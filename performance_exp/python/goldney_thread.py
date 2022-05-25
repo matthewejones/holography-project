@@ -2,9 +2,9 @@ import numpy as np
 import math
 import threading
 
-image_height = 192
-image_width = 192
-frames = 50
+image_height = 1080
+image_width = 1920
+frames = 4
 N = 8
 
 class OSPR(threading.Thread):
