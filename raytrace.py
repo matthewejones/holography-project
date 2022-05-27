@@ -23,6 +23,13 @@ Flags:
     --grid <width>:     Adjust size from grid and width of grid at projection distance instead of beam angle.
     --save <config>:    Save current configuration to file
     --config <config>:  Load configuration from file
+    --gamma:            Perform gamma correction
+    --shade <i>:        Perform shading:
+                            i = 1: linear vertical
+                            i = 2: linear vertical inverted
+                            i = 3: Horizontal linear symmetric
+                            i = 4: Horizontal linear symmetric inverted
+
 """
 
 
@@ -40,6 +47,7 @@ def raytrace_slope(image, angle, R):
 
 @jit(nopython = True, cache = True)
 def _raytrace_slope(image, angle, R):
+    global grid
     #make 2 NxN arrays, one stores the total of the pixel values, one stores the number of pixels
     intensities = np.zeros(image.shape)
     quantities = np.zeros(image.shape, np.int16)
@@ -79,6 +87,7 @@ def raytrace_cylinder(image, radius, R):
 
 @jit(nopython = True, cache=True)
 def _raytrace_cylinder(image, radius, R):
+    global grid
     #make 2 NxN arrays, one stores the total of the pixel values, one stores the number of pixels
     intensities = np.zeros(image.shape)
     quantities = np.zeros(image.shape, np.int16)
@@ -118,9 +127,11 @@ if __name__ == "__main__":
     angle = 0
     r = 0.1
     adjust = False
+    gamma = False
+    shade = False
 
     def parse_input(opts):
-        global slope, cylinder, hologram, angle, r, R, output, save, beam_angle, grid, adjust
+        global slope, cylinder, hologram, angle, r, R, output, save, beam_angle, grid, adjust, gamma, shade
         for opt, arg in opts:
             if opt == '-s':
                 slope = True
@@ -142,11 +153,15 @@ if __name__ == "__main__":
                 adjust = True
             elif opt == '--grid':
                 grid = float(arg)
+            elif opt == '--gamma':
+                gamma = True
+            elif opt == '--shade':
+                shade = int(arg)
 
     argv = sys.argv[1:]
 
     try:
-        opts, args = getopt.getopt(argv, "s:c:R:o:gnha:b", ['grid=', 'config=', 'save='])
+        opts, args = getopt.getopt(argv, "s:c:R:o:gnha:b", ['grid=', 'config=', 'save=', 'gamma', 'shade='])
     except:
         raise TypeError("Enter valid input image. Use -h for usage")
         sys.exit(2)
@@ -192,6 +207,10 @@ if __name__ == "__main__":
     
     input_image = cv2.imread('images/{}'.format(input_file), cv2.IMREAD_GRAYSCALE)
 
+    if shade:
+        input_image = utils.shade(input_image, shade)
+
+
     if (adjust):
         print("Performing beam angle adjustment")
         beam_angle = BEAM_ANGLE_ADJUSTED
@@ -201,7 +220,7 @@ if __name__ == "__main__":
         print("Raytracing...")
         raytrace = raytrace_slope(input_image, angle*np.pi/180, R)
         print("Raytracing complete")
-        filename = output + ('-slope' if (slope and cylinder) else '') if output else "{}-slope-{}-{}".format(name, angle, R)
+        filename = output + ('-slope' if (slope and cylinder) else '') if output else "{}-slope-{}-{}{}".format(name, angle, R, shade if shade else '')
         if (save):
             cv2.imwrite('images/{}.{}'.format(filename, extension), raytrace)
             print("Saved as {}.{}".format(filename, extension))
@@ -211,13 +230,15 @@ if __name__ == "__main__":
         print("Raytracing...")
         raytrace = raytrace_cylinder(input_image, r, R)
         print("Raytracing complete")
-        filename = output + ('-cylinder' if (slope and cylinder) else '') if output else "{}-cylinder-{}-{}".format(name, r, R)
+        filename = output + ('-cylinder' if (slope and cylinder) else '') if output else "{}-cylinder-{}-{}{}".format(name, r, R, shade if shade else '')
         if (save):
             cv2.imwrite('images/{}.{}'.format(filename, extension), raytrace)
             print("Saved as {}.{}".format(filename, extension))
     if (hologram):
         print("Generating Hologram")
         #From OSPR.py by Adam Goldney:
+        if gamma == True:
+            input_image = utils.gamma_correct(input_image)
         transformed_image = utils.window_image_for_holo(raytrace)
         holo = OSPR(transformed_image, False)
         file = '{}-holo.{}'.format(filename, 'bmp')
