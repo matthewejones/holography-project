@@ -29,6 +29,7 @@ Flags:
                             i = 2: linear vertical inverted
                             i = 3: Horizontal linear symmetric
                             i = 4: Horizontal linear symmetric inverted
+    -i:                 Apply transformation for a concave surface
 
 """
 
@@ -129,9 +130,10 @@ if __name__ == "__main__":
     adjust = False
     gamma = False
     shade = False
+    invert = False
 
     def parse_input(opts):
-        global slope, cylinder, hologram, angle, r, R, output, save, beam_angle, grid, adjust, gamma, shade
+        global slope, cylinder, hologram, angle, r, R, output, save, beam_angle, grid, adjust, gamma, shade, invert
         for opt, arg in opts:
             if opt == '-s':
                 slope = True
@@ -157,11 +159,13 @@ if __name__ == "__main__":
                 gamma = True
             elif opt == '--shade':
                 shade = int(arg)
+            elif opt == '-i':
+                invert = True
 
     argv = sys.argv[1:]
 
     try:
-        opts, args = getopt.getopt(argv, "s:c:R:o:gnha:b", ['grid=', 'config=', 'save=', 'gamma', 'shade='])
+        opts, args = getopt.getopt(argv, "s:c:R:o:gnha:bi", ['grid=', 'config=', 'save=', 'gamma', 'shade='])
     except:
         raise TypeError("Enter valid input image. Use -h for usage")
         sys.exit(2)
@@ -210,6 +214,9 @@ if __name__ == "__main__":
     if shade:
         input_image = utils.shade(input_image, shade)
 
+    if invert:
+        r = -r
+        R += r
 
     if (adjust):
         print("Performing beam angle adjustment")
