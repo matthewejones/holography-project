@@ -3,7 +3,7 @@ import cv2
 
 def naive(target_image):
     TotalHologram = np.zeros([target_image.shape[0], target_image.shape[1] ,3])
-    Hfield = np.fft.ifft2(np.fft.ifftshift(target_image))
+    Hfield = np.fft.ifft2(np.fft.ifftshift(np.sqrt(target_image)))
     Phase = np.angle(Hfield) > 0
     
     for i in range(3):
